@@ -25,6 +25,9 @@ dependencies = [
     "streamlit>=1.40",
 ]
 
+[project.scripts]
+axiomcart-voice-agent = "src.main:main"
+
 [dependency-groups]
 dev-dependencies = [
     "pytest>=8.0",

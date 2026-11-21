@@ -36,21 +36,30 @@ travel_scout_tools_by_name = {t.name: t for t in travel_scout_tools}
 # ===========================================================================
 def _agent_step(state, history_key, system_prompt, model, agent_name):
     """One LLM turn. Records a final result when the LLM stops calling tools."""
-    history = state.get(history_key, [])
+    history = state.get(history_key)[-6:] if state.get(history_key) else []
     first_turn = not history
-
-    query = state["user_query"]
-    if state.get("focus"):
+    
+    if first_turn:
+        # First call — conversation history is persisted via MemorySaver
+        logger.info("Processing menu query for first time...")
+        query = state["user_query"]
+        if state.get("focus"):
         query += f"\n\nFocus: {state['focus']}"
-
-    messages = [SystemMessage(content=system_prompt)]
-    messages += [HumanMessage(content=query)] if first_turn else history
+    
+        all_msgs = [SystemMessage(content=system_prompt),HumanMessage(content=query), *history]
+    
+    else:
+        # Subsequent call — tool results already in menu_messages
+        logger.info("Menu agent re-invoked after tool results")
+        all_msgs = [*history, HumanMessage(content=query)]
+    
 
     tool_rounds = sum(isinstance(m, ToolMessage) for m in history)
     # Out of tool budget -> use the plain LLM so it must answer now
-    result = (llm if tool_rounds >= MAX_TOOL_ROUNDS else model).invoke(messages)
+    result = (llm if tool_rounds >= MAX_TOOL_ROUNDS else model).invoke(all_msgs)
+    all_msgs = [*all_msgs, result]
 
-    update = {history_key: ([HumanMessage(content=query)] if first_turn else []) + [result]}
+    update = {history_key: [all_msgs]}
     if not result.tool_calls:
         update["agent_results"] = [{
             "agent_name": agent_name,

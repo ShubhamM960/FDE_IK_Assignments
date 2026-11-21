@@ -100,7 +100,7 @@ sales_tools_by_name = {t.name: t for t in sales_tools}
 product_llm = llm.bind_tools(product_tools)
 sales_llm   = llm.bind_tools(sales_tools)
 
-
+MAX_TOOL_ROUNDS = 5
 # ═══════════════════════════════════════════════════════════
 #  Agent Subgraphs (model ⇄ tools)
 # ═══════════════════════════════════════════════════════════
@@ -153,7 +153,7 @@ product_subgraph = pb.compile()
 def support_model(state: AgentState) -> dict:
     """Call the support LLM. If it asks for info without calling tools,
     use interrupt() to pause the graph and collect user input."""
-    response = sales_llm.invoke(state["messages"])
+    result = (llm if tool_rounds >= MAX_TOOL_ROUNDS else sales_llm).invoke(state["messages"])
     logger.info("[support:model] tool_calls=%s", bool(response.tool_calls))
 
     # If no tool calls and no tools have been called yet,
@@ -208,7 +208,7 @@ def build_context(messages: list[AnyMessage]) -> str:
     if not messages:
         return ""
     parts = []
-    for m in messages:
+    for m in messages[-6:]:
         if isinstance(m, HumanMessage):
             parts.append(f"Customer: {m.content}")
         elif isinstance(m, AIMessage):

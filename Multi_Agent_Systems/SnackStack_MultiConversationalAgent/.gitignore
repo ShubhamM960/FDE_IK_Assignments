@@ -1,0 +1,39 @@
+# ── Secrets ──────────────────────────────────────────────
+.env
+.env.*
+# ...but DO commit the template (the repo-root .gitignore has `.env.*`, which hid it)
+!.env.example
+
+# ── App output (recreated automatically at runtime) ──────
+# Logs written by snackstack/logger.py
+logs/
+*.log
+# Persisted Chroma vector store (rebuilt from data/menu.py when empty)
+snackstack_db/
+# TTS audio, if you ever save it inside the project
+*.wav
+*.mp3
+
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# ── Virtual envs & tooling ───────────────────────────────
+.venv/
+.bootstrap/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Editors / OS ─────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+
+# NOTE: keep `uv.lock` and `.python-version` committed —
+# they make `uv sync` install the exact same versions on every machine.
